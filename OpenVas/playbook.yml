@@ -24,46 +24,17 @@
       reboot:
       when: dhclient_conf.changed
 
-    - name: Creation fichier pour l installation de docker
-      template:
-        src: docker-install.sh
-        dest: /home/ben/docker-install.sh
+    - name: Installation premiere partie des packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+          - docker.io
+          - docker-compose
 
-    - name: Changement des permissions ajout de "+x"
-      file: dest=/home/ben/docker-install.sh mode=a+x
+    - name: Recuperation du container
+      shell: docker pull mikesplain/openvas
 
-    - name: Installation docker
-      command: sh /home/ben/docker-install.sh
-
-    - name: Création dossier openvas
-      file:
-        path: /home/ben/openvas
-        state: directory
-        mode: 0755
-
-    - name: Creation fichier pour le service de backup
-      template:
-        src: docker-compose.yml        
-        dest: /home/ben/docker-compose.yml
-    
-    - name: telechargement greenbone-community-edition
-      shell: docker-compose -p greenbone-community-edition pull
-
-    - name: demarrage greenbone-community-edition
-      shell: docker-compose -p greenbone-community-edition up -d
-
-    - name: Injection des différents tests de vulnérabilité
-      shell: docker-compose -p greenbone-community-edition exec -u ospd-openvas ospd-openvas greenbone-nvt-sync
-
-    - name: Pause de 10 minutes pour attendre la fin de l'intégration des tests de vulnérabilité
-      pause:
-        minutes: 10
-
-    - name: Synchronisation de donnée SCAP
-      shell: docker-compose -p greenbone-community-edition exec -u gvmd gvmd greenbone-feed-sync --type SCAP
-
-    - name: Synchronisation de donnée CERT
-      shell: docker-compose -p greenbone-community-edition exec -u gvmd gvmd greenbone-feed-sync --type CERT
-
-    - name: Synchronisation de donnée GVMD_DATA
-      shell: docker-compose -p greenbone-community-edition exec -u gvmd gvmd greenbone-feed-sync --type GVMD_DATA
+    - name: Lancement du container 
+      shell: docker run -d -p 443:443 --name openvas mikesplain/openvas
