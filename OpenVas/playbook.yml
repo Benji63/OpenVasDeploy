@@ -32,6 +32,7 @@
       loop:
           - docker.io
           - docker-compose
+          - ubuntu-desktop
 
     - name: Recuperation du container
       shell: docker pull mikesplain/openvas
