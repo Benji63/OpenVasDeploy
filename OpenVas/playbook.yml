@@ -1,0 +1,69 @@
+---
+- hosts: openvas
+  become: true
+  connection: ssh
+  tasks:
+    - name: Configuration du hostname
+      hostname:
+       name: "{{ HOSTNAME }}"
+
+    - name: Resolution du hostname
+      lineinfile:
+        regexp: ^127\.0\.1\.1\s.*$
+        line: "127.0.1.1 {{ HOSTNAME }} "
+        path: /etc/hosts
+
+    - name: Configurer dhclient
+      lineinfile:
+        regexp: ^#?prepend domain\-name\-servers .*$
+        line: "prepend domain-name-servers 8.8.8.8;"
+        path: /etc/dhcp/dhclient.conf
+      register: dhclient_conf
+
+    - name: Redémarrer les serveurs
+      reboot:
+      when: dhclient_conf.changed
+
+    - name: Creation fichier pour l installation de docker
+      template:
+        src: docker-install.sh
+        dest: /home/ben/docker-install.sh
+
+    - name: Changement des permissions ajout de "+x"
+      file: dest=/home/ben/docker-install.sh mode=a+x
+
+    - name: Installation docker
+      command: sh /home/ben/docker-install.sh
+
+    - name: Création dossier openvas
+      file:
+        path: /home/ben/openvas
+        state: directory
+        mode: 0755
+
+    - name: Creation fichier pour le service de backup
+      template:
+        src: docker-compose.yml        
+        dest: /home/ben/docker-compose.yml
+    
+    - name: telechargement greenbone-community-edition
+      shell: docker-compose -p greenbone-community-edition pull
+
+    - name: demarrage greenbone-community-edition
+      shell: docker-compose -p greenbone-community-edition up -d
+
+    - name: Injection des différents tests de vulnérabilité
+      shell: docker-compose -p greenbone-community-edition exec -u ospd-openvas ospd-openvas greenbone-nvt-sync
+
+    - name: Pause de 10 minutes pour attendre la fin de l'intégration des tests de vulnérabilité
+      pause:
+        minutes: 10
+
+    - name: Synchronisation de donnée SCAP
+      shell: docker-compose -p greenbone-community-edition exec -u gvmd gvmd greenbone-feed-sync --type SCAP
+
+    - name: Synchronisation de donnée CERT
+      shell: docker-compose -p greenbone-community-edition exec -u gvmd gvmd greenbone-feed-sync --type CERT
+
+    - name: Synchronisation de donnée GVMD_DATA
+      shell: docker-compose -p greenbone-community-edition exec -u gvmd gvmd greenbone-feed-sync --type GVMD_DATA
