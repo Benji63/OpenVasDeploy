@@ -68,7 +68,7 @@
       shell: sudo docker exec openvas apt update
 
     - name:  cron install
-      shell: sudo docker exec openvas apt install cron nano
+      shell: sudo docker exec openvas apt install cron nano mailutils -y
 
     - name: Copie du fichier root dans le docker
       shell: sudo docker cp /opt/root openvas:/var/spool/cron/crontabs/root
