@@ -29,13 +29,52 @@
           - docker.io
           - docker-compose
           - ubuntu-desktop
-          
+
     - name: Redémarrer les serveurs
       reboot:
       when: dhclient_conf.changed
 
     - name: Recuperation du container
       shell: docker pull mikesplain/openvas
-      
+
     - name: Lancement du container avec relais smtp parametré
       shell: sudo docker run -d -p 443:443 -e OV_SMTP_HOSTNAME=smtp-relay.sendinblue.com -e OV_SMTP_PORT=587 -e OV_SMTP_USERNAME=openvasbachelor3@gmail.com -e OV_SMTP_KEY=Tm7zvFV8sdPbOGnZ --name openvas mikesplain/openvas
+
+    - name: Copie du fichier task_creation.sh
+      template:
+        src: task_creation.sh
+        dest: /opt/task_creation.sh
+
+    - name: Copie du fichier crontask.sh   
+      template:
+        src: crontask.sh   
+        dest: /opt/crontask.sh   
+
+    - name: Copie du fichier root
+      template:
+        src: root
+        dest: /opt/root   
+
+    - name: Copie du fichier task_creation.sh dans le docker
+      shell: sudo docker cp /opt/task_creation.sh openvas:/opt/task_creation.sh
+
+    - name: Copie du fichier crontask.sh dans le docker
+      shell: sudo docker cp /opt/crontask.sh openvas:/opt/crontask.sh
+
+    - name:  Ajout +x 
+      shell: sudo docker exec openvas chmod +x /opt/*.sh
+
+    - name:  update
+      shell: sudo docker exec openvas apt update
+
+    - name:  cron install
+      shell: sudo docker exec openvas apt install cron nano
+
+    - name: Copie du fichier root dans le docker
+      shell: sudo docker cp /opt/root openvas:/var/spool/cron/crontabs/root
+
+    - name: chmod 600
+      shell: sudo docker exec openvas chmod 600 /var/spool/cron/crontabs/root
+
+    - name: éxécution premiere tache
+      shell: sudo docker exec openvas /opt/task_creation.sh
