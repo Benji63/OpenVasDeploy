@@ -75,6 +75,9 @@
 
     - name: chmod 600
       shell: sudo docker exec openvas chmod 600 /var/spool/cron/crontabs/root
+     
+    - name:  lancement service cron
+      shell: sudo docker exec openvas service cron start
 
     - name: éxécution premiere tache
       shell: sudo docker exec openvas /opt/task_creation.sh {{ IP_ADRESS_TARGET }}
