@@ -36,7 +36,7 @@ report=$(omp -u admin -w admin --get-report $LAUNCHED_TASK)
 echo "$(date): Rapport de scan:" >> "$LOG_FILE"
 echo "$report" >> "$LOG_FILE"
 
-echo "$report" | mail -s "Rapport de scan" openvasbachelor3@gmail.com
+echo "$report" | mail -s "Rapport de scan" $2
 
 echo "$(date): Exporting variables to ~/.bashrc" >> "$LOG_FILE"
 echo "export TARGET_ID=$HOST_ID" >> ~/.bashrc

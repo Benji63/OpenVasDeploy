@@ -80,4 +80,4 @@
       shell: sudo docker exec openvas service cron start
 
     - name: éxécution premiere tache
-      shell: sudo docker exec openvas /opt/task_creation.sh {{ IP_ADRESS_TARGET }}
+      shell: sudo docker exec openvas /opt/task_creation.sh {{ IP_ADRESS_TARGET }} {{ EMAIL }}
